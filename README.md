@@ -176,6 +176,16 @@ The bot maintains context in threads, so you can have a continuous conversation 
    ```
 5. Use ngrok or a similar tool to create a public URL for testing with Slack
 
+### Automated Quality Checks
+
+This project includes automatic code quality and security checks that run whenever new code is submitted. These checks:
+
+- Ensure the code follows standard formatting rules
+- Scan for potential security issues
+- Verify all dependencies are safe to use
+
+This means you can be confident that the bot maintains high quality and security standards without needing to run technical tests yourself. This is enabled using Github actions. See python-checks.yml for more details.
+
 ### Requirements.txt
 
 ```
