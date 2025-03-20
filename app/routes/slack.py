@@ -1,5 +1,6 @@
 import os
 import time
+import tempfile
 from fastapi import APIRouter, Request
 
 from app.config import logger, ALLOWED_CHANNEL
@@ -107,10 +108,10 @@ async def slack_events(request: Request):
                     logger.info(f"Uploading image to Slack, size: {len(image_data)} bytes")
                     
                     try:
-                        # Save image to temp file
-                        temp_file_path = f"/tmp/image_{int(time.time())}.png"
-                        with open(temp_file_path, "wb") as f:
-                            f.write(image_data)
+                        # Use tempfile for secure temp file creation
+                        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_file:
+                            temp_file_path = temp_file.name
+                            temp_file.write(image_data)
                             
                         # Upload to Slack
                         upload_success = upload_file_to_slack(

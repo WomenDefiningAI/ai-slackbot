@@ -1,5 +1,6 @@
 import os
 import time
+import tempfile
 from typing import List, Dict, Any, Optional
 import requests
 
@@ -65,11 +66,12 @@ def convert_text_to_speech(openai_client, text: str) -> Optional[str]:
             input=text
         )
         
-        # Save to temporary file
-        temp_file = f"/tmp/speech_{int(time.time())}.mp3"
-        response.stream_to_file(temp_file)
+        # Use tempfile for secure temp file creation
+        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
+            temp_file_path = temp_file.name
+            response.stream_to_file(temp_file_path)
         
-        return temp_file
+        return temp_file_path
     except Exception as e:
         logger.error(f"Error converting text to speech: {e}")
         return None
@@ -83,22 +85,23 @@ def transcribe_audio(openai_client, audio_url: str, client: WebClient) -> str:
         download_url = response["file"]["url_private_download"]
         
         headers = {"Authorization": f"Bearer {client.token}"}
-        file_response = requests.get(download_url, headers=headers)
+        # Add timeout to prevent hanging
+        file_response = requests.get(download_url, headers=headers, timeout=30)
         
-        # Save to a temporary file
-        temp_file = "temp_audio.mp3"
-        with open(temp_file, "wb") as f:
-            f.write(file_response.content)
+        # Use tempfile for secure temp file creation
+        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
+            temp_file_path = temp_file.name
+            temp_file.write(file_response.content)
         
         # Transcribe the audio
-        with open(temp_file, "rb") as audio_file:
+        with open(temp_file_path, "rb") as audio_file:
             transcription = openai_client.audio.transcriptions.create(
                 file=audio_file,
                 model="whisper-1"
             )
         
         # Remove temporary file
-        os.remove(temp_file)
+        os.remove(temp_file_path)
         
         return transcription.text
     except Exception as e:

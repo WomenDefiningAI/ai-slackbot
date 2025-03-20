@@ -9,14 +9,18 @@ from app.config import logger, MAX_CACHE_SIZE, CACHE_EXPIRY_SECONDS
 processed_messages: Dict[str, str] = {}
 
 def create_message_hash(event: Dict[str, Any]) -> str:
-    """Create a unique hash for a message to prevent duplicate processing."""
+    """
+    Create a unique hash for a message to prevent duplicate processing.
+    Note: This is NOT used for security purposes, only for duplicate detection.
+    """
     text = event.get("text", "")
     files = "-".join([f["id"] for f in event.get("files", [])])
     timestamp = event.get("ts", "")
     
     # Create a unique signature
     message_signature = f"{text}|{files}|{timestamp}"
-    return hashlib.md5(message_signature.encode('utf-8')).hexdigest()
+    # Use SHA-256 which is more secure than MD5
+    return hashlib.sha256(message_signature.encode('utf-8')).hexdigest()
 
 def is_duplicate_message(event: Dict[str, Any]) -> bool:
     """Check if a message has already been processed."""

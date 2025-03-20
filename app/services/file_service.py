@@ -27,7 +27,8 @@ def download_file(file_url: str) -> Optional[bytes]:
     try:
         response = requests.get(
             file_url,
-            headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"}
+            headers={"Authorization": f"Bearer {SLACK_BOT_TOKEN}"},
+            timeout=30  # Add timeout to prevent hanging
         )
         if response.status_code == 200:
             return response.content

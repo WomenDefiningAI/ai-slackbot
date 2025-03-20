@@ -1,0 +1,10 @@
+# Safety ignore file
+# Format: [vulnerability_id]:[package_name]
+# Example: 51457:requests
+#
+# This file contains a list of vulnerability IDs that have been reviewed
+# and determined to be acceptable risks for this specific project.
+# Each entry should include a comment explaining why it's safe to ignore.
+
+# No vulnerabilities to ignore at this time.
+# Add entries here when you assess vulnerabilities and determine they're acceptable. 

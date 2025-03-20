@@ -39,4 +39,9 @@ async def startup_event():
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8080))
-    uvicorn.run("app.main:app", host="0.0.0.0", port=port)
+    
+    # Bind to localhost by default, but allow external access if explicitly enabled
+    host = "0.0.0.0" if os.environ.get("ALLOW_EXTERNAL_ACCESS", "").lower() in ("true", "1", "yes") else "127.0.0.1"
+    logger.info(f"Starting server on {host}:{port}")
+    
+    uvicorn.run("app.main:app", host=host, port=port)
