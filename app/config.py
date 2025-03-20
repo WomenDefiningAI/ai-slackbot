@@ -1,9 +1,11 @@
 import os
 import logging
+from app.utils.pii_logger import get_logger
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Create PII-redacted logger
+logger = get_logger("slackbot")
 
 # Environment variables
 SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]

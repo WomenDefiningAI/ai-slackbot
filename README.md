@@ -38,6 +38,25 @@ This template relies on OpenAI APIs for LLM capabiltiies, but you can continue t
 - **Environment Variables**: Always use environment variables for sensitive information, especially in production.
 - **Git Practices**: Make sure `.env` is included in your `.gitignore` file to prevent accidental commits.
 
+### 🔒 Enhanced Security Features
+
+#### PII Redaction in Logs
+
+This bot includes an advanced logging system that automatically redacts personally identifiable information (PII) from log files, including:
+
+- Email addresses
+- IP addresses
+- Phone numbers
+- Social Security Numbers
+- Credit card numbers
+- API keys and tokens
+
+This prevents sensitive information from being exposed in log files while still providing useful debugging information. All logs are stored in the `logs/bot_activity.log` file by default.
+
+To configure logging behavior, you can set the following environment variables:
+- `LOG_DIR`: Directory where logs will be stored (default: `logs`)
+- `LOG_LEVEL`: Minimum log level to record (default: `INFO`)
+
 ### Installation
 
 1. **Create a Slack App**:
