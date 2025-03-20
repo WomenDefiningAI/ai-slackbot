@@ -8,7 +8,7 @@ from app.config import (
     logger, DEFAULT_MODEL, IMAGE_MODEL, 
     IMAGE_SIZE, IMAGE_QUALITY, TTS_MODEL, TTS_VOICE, WHISPER_MODEL
 )
-from app.clients.slack_client import WebClient
+from slack_sdk import WebClient
 
 
 def get_openai_response(openai_client, messages: List[Dict[str, Any]]) -> str:

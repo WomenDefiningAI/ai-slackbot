@@ -57,6 +57,24 @@ To configure logging behavior, you can set the following environment variables:
 - `LOG_DIR`: Directory where logs will be stored (default: `logs`)
 - `LOG_LEVEL`: Minimum log level to record (default: `INFO`)
 
+#### Rate Limiting
+
+The bot implements rate limiting to prevent abuse and ensure fair usage across users and teams. Rate limiting works on two levels:
+
+- **User-level**: Limits how many requests each individual user can make in a time window
+- **Team-level**: Limits the total requests across all users in a team/workspace
+
+When a user exceeds their rate limit, they'll receive a polite message indicating when they can try again. This protects the bot from unintentional flooding and ensures a responsive experience for all users.
+
+Rate limiting can be customized using these environment variables:
+- `RATE_LIMIT_ENABLED`: Enable or disable rate limiting (default: `true`)
+- `USER_RATE_LIMIT_WINDOW`: Time window in seconds for user rate limiting (default: `60`)
+- `USER_RATE_LIMIT_MAX`: Maximum number of requests per user in the window (default: `10`)
+- `TEAM_RATE_LIMIT_WINDOW`: Time window in seconds for team rate limiting (default: `60`)
+- `TEAM_RATE_LIMIT_MAX`: Maximum number of requests per team in the window (default: `100`)
+
+The bot also includes an automatic cleanup process to prevent memory growth from stored rate limit data.
+
 ### Installation
 
 1. **Create a Slack App**:

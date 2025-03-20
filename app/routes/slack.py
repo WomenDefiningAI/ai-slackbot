@@ -5,6 +5,7 @@ from fastapi import APIRouter, Request
 
 from app.config import logger, ALLOWED_CHANNEL
 from app.utils.helpers import is_duplicate_message
+from app.utils.rate_limiter import user_rate_limiter
 from app.services.slack_service import (
     get_thread_history, process_current_message, 
     is_image_generation_request,
@@ -69,6 +70,31 @@ async def slack_events(request: Request):
         if is_duplicate_message(event):
             logger.info("Ignoring duplicate message")
             return {"status": "ignored_duplicate"}
+        
+        # Get user_id and team_id for rate limiting
+        user_id = event.get("user")
+        team_id = data.get("team_id")
+        
+        # Check rate limiting
+        is_limited, reason = user_rate_limiter.is_rate_limited(user_id, team_id)
+        if is_limited:
+            logger.warning(f"Rate limited user {user_id}: {reason}", {
+                "user_id": user_id,
+                "team_id": team_id,
+                "reason": reason
+            })
+            
+            # Get the remaining seconds until the rate limit resets
+            remaining = user_rate_limiter.get_remaining_requests(user_id, team_id)
+            reset_seconds = remaining.get("user_window_reset_seconds", 60)
+            
+            # Notify the user they are being rate limited
+            slack_client.chat_postEphemeral(
+                channel=channel,
+                user=user_id,
+                text=f"⚠️ You've reached the rate limit for bot interactions. Please try again in about {int(reset_seconds)} seconds."
+            )
+            return {"status": "rate_limited", "reason": reason}
         
         # Get channel, thread, and message text
         thread_ts = event.get("thread_ts", event.get("ts"))

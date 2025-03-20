@@ -1,10 +1,71 @@
 import logging
 import re
 import os
-from typing import Dict, Any
+import time
+from typing import Dict, Any, Optional
+from threading import Lock
+
+class RateLimiter:
+    """Token bucket rate limiter for controlling log message frequency"""
+    
+    def __init__(self, tokens_per_second: float = 5.0, max_tokens: int = 100):
+        """
+        Initialize a token bucket rate limiter
+        
+        Args:
+            tokens_per_second: Rate at which tokens are added to the bucket
+            max_tokens: Maximum number of tokens the bucket can hold
+        """
+        self.tokens_per_second = tokens_per_second
+        self.max_tokens = max_tokens
+        self.tokens = max_tokens
+        self.last_refill_time = time.time()
+        self.lock = Lock()
+        self.dropped_count = 0
+    
+    def _refill(self):
+        """Refill tokens based on time elapsed since last refill"""
+        now = time.time()
+        elapsed = now - self.last_refill_time
+        new_tokens = elapsed * self.tokens_per_second
+        
+        if new_tokens > 0:
+            self.tokens = min(self.max_tokens, self.tokens + new_tokens)
+            self.last_refill_time = now
+    
+    def allow_message(self) -> bool:
+        """
+        Check if a new message is allowed based on current token count
+        
+        Returns:
+            True if the message is allowed, False otherwise
+        """
+        with self.lock:
+            self._refill()
+            
+            if self.tokens >= 1:
+                self.tokens -= 1
+                return True
+            else:
+                self.dropped_count += 1
+                return False
+    
+    def get_dropped_count(self) -> int:
+        """Get the count of messages dropped due to rate limiting"""
+        with self.lock:
+            return self.dropped_count
+    
+    def reset_dropped_count(self):
+        """Reset the dropped message counter"""
+        with self.lock:
+            self.dropped_count = 0
+
 
 class PIIRedactedLogger:
-    def __init__(self, logger_name: str, log_level=logging.INFO):
+    def __init__(self, logger_name: str, log_level=logging.INFO, 
+                 rate_limit_enabled: bool = True,
+                 rate_limit_per_second: float = 5.0,
+                 rate_limit_burst: int = 100):
         self.logger = logging.getLogger(logger_name)
         self.logger.setLevel(log_level)
         
@@ -26,6 +87,17 @@ class PIIRedactedLogger:
         
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
+        
+        # Setup rate limiting
+        self.rate_limit_enabled = rate_limit_enabled
+        if rate_limit_enabled:
+            self.rate_limiter = RateLimiter(
+                tokens_per_second=rate_limit_per_second,
+                max_tokens=rate_limit_burst
+            )
+            # Create a daily throttled log message counter
+            self.last_throttle_report = time.time()
+            self.throttle_report_interval = 3600  # Report dropped logs every hour
         
         # Patterns to redact
         self.pii_patterns = {
@@ -66,7 +138,39 @@ class PIIRedactedLogger:
                 redacted[key] = value
         return redacted
     
+    def _check_rate_limit(self, level: int) -> bool:
+        """
+        Check if the message should be rate limited
+        
+        Args:
+            level: The logging level of the message
+            
+        Returns:
+            True if the message should be logged, False if it should be dropped
+        """
+        # If rate limiting is disabled or this is a high-level message, always allow
+        if not self.rate_limit_enabled or level >= logging.ERROR:
+            return True
+            
+        # For less critical messages, apply rate limiting
+        allowed = self.rate_limiter.allow_message()
+        
+        # Periodically report on dropped messages
+        now = time.time()
+        if (now - self.last_throttle_report) > self.throttle_report_interval:
+            dropped_count = self.rate_limiter.get_dropped_count()
+            if dropped_count > 0:
+                self.logger.warning(f"Rate limiting dropped {dropped_count} log messages in the last hour")
+                self.rate_limiter.reset_dropped_count()
+            self.last_throttle_report = now
+            
+        return allowed
+    
     def log_event(self, level: int, message: str, metadata: Dict[str, Any] = None):
+        # Check if this message should be rate limited
+        if not self._check_rate_limit(level):
+            return
+            
         redacted_message = self._redact_pii(message)
         
         if metadata:
@@ -91,6 +195,28 @@ class PIIRedactedLogger:
     def debug(self, message: str, metadata: Dict[str, Any] = None):
         self.log_event(logging.DEBUG, message, metadata)
 
-# Create a singleton instance
-def get_logger(name: str = "slackbot", log_level: int = logging.INFO) -> PIIRedactedLogger:
-    return PIIRedactedLogger(name, log_level) 
+# Create a singleton instance with configurable rate limits
+def get_logger(name: str = "slackbot", log_level: int = logging.INFO,
+               rate_limit_enabled: bool = True,
+               rate_limit_per_second: float = 5.0,
+               rate_limit_burst: int = 100) -> PIIRedactedLogger:
+    """
+    Get a PIIRedactedLogger instance with configurable rate limiting
+    
+    Args:
+        name: Logger name
+        log_level: Minimum logging level
+        rate_limit_enabled: Whether to enable rate limiting
+        rate_limit_per_second: Maximum logs per second (sustained rate)
+        rate_limit_burst: Maximum burst of logs allowed
+        
+    Returns:
+        A configured PIIRedactedLogger instance
+    """
+    return PIIRedactedLogger(
+        name, 
+        log_level,
+        rate_limit_enabled,
+        rate_limit_per_second,
+        rate_limit_burst
+    ) 

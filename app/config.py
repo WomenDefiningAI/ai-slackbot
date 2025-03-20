@@ -15,8 +15,20 @@ OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 MAX_THREAD_HISTORY = int(os.environ.get("MAX_THREAD_HISTORY", "10"))
 ALLOWED_CHANNEL = os.environ.get("ALLOWED_CHANNEL")
 
+# Rate limiting configuration
+RATE_LIMIT_ENABLED = os.environ.get("RATE_LIMIT_ENABLED", "true").lower() in ("true", "1", "yes")
+USER_RATE_LIMIT_WINDOW = int(os.environ.get("USER_RATE_LIMIT_WINDOW", "60"))  # seconds
+USER_RATE_LIMIT_MAX = int(os.environ.get("USER_RATE_LIMIT_MAX", "10"))  # requests per window
+TEAM_RATE_LIMIT_WINDOW = int(os.environ.get("TEAM_RATE_LIMIT_WINDOW", "60"))  # seconds
+TEAM_RATE_LIMIT_MAX = int(os.environ.get("TEAM_RATE_LIMIT_MAX", "100"))  # requests per window
+
 # Log configuration
 logger.info(f"Bot configured to work only in channel: {ALLOWED_CHANNEL}")
+if RATE_LIMIT_ENABLED:
+    logger.info(f"Rate limiting enabled: {USER_RATE_LIMIT_MAX} requests per {USER_RATE_LIMIT_WINDOW}s per user, " +
+                f"{TEAM_RATE_LIMIT_MAX} requests per {TEAM_RATE_LIMIT_WINDOW}s per team")
+else:
+    logger.info("Rate limiting disabled")
 
 # Constants for the application
 DEFAULT_MODEL = "gpt-4o"  # This model supports web search capability
