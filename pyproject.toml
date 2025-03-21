@@ -16,3 +16,6 @@ dependencies = [
     "slack-sdk>=3.35.0",
     "uvicorn>=0.34.0",
 ]
+
+[dependency-groups]
+dev = ["flake8>=7.1.2"]
