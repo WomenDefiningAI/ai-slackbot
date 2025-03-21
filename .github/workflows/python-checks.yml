@@ -32,3 +32,7 @@ jobs:
       - name: Format with ruff
         run: |
           uv run ruff format run.py app/
+
+      - name: Type check with mypy
+        run: |
+          uv run mypy run.py app/

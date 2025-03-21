@@ -127,7 +127,7 @@ class PIIRedactedLogger:
 
     def _redact_dict(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Redact PII from dictionary values recursively"""
-        redacted = {}
+        redacted: Dict[str, Any] = {}
         for key, value in data.items():
             if isinstance(value, str):
                 redacted[key] = self._redact_pii(value)
@@ -176,7 +176,9 @@ class PIIRedactedLogger:
 
         return allowed
 
-    def log_event(self, level: int, message: str, metadata: Dict[str, Any] = None):
+    def log_event(
+        self, level: int, message: str, metadata: Dict[str, Any] | None = None
+    ):
         # Check if this message should be rate limited
         if not self._check_rate_limit(level):
             return
@@ -190,19 +192,19 @@ class PIIRedactedLogger:
         else:
             self.logger.log(level, redacted_message)
 
-    def info(self, message: str, metadata: Dict[str, Any] = None):
+    def info(self, message: str, metadata: Dict[str, Any] | None = None):
         self.log_event(logging.INFO, message, metadata)
 
-    def warning(self, message: str, metadata: Dict[str, Any] = None):
+    def warning(self, message: str, metadata: Dict[str, Any] | None = None):
         self.log_event(logging.WARNING, message, metadata)
 
-    def error(self, message: str, metadata: Dict[str, Any] = None):
+    def error(self, message: str, metadata: Dict[str, Any] | None = None):
         self.log_event(logging.ERROR, message, metadata)
 
-    def critical(self, message: str, metadata: Dict[str, Any] = None):
+    def critical(self, message: str, metadata: Dict[str, Any] | None = None):
         self.log_event(logging.CRITICAL, message, metadata)
 
-    def debug(self, message: str, metadata: Dict[str, Any] = None):
+    def debug(self, message: str, metadata: Dict[str, Any] | None = None):
         self.log_event(logging.DEBUG, message, metadata)
 
 

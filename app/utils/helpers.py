@@ -41,7 +41,7 @@ def is_duplicate_message(event: Dict[str, Any]) -> bool:
         return True
 
     # Store this message hash
-    processed_messages[message_hash] = event.get("ts")
+    processed_messages[message_hash] = event.get("ts", "")
 
     # Cleanup old entries (keep only the last MAX_CACHE_SIZE)
     if len(processed_messages) > MAX_CACHE_SIZE:

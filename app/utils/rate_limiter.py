@@ -136,7 +136,7 @@ class UserRateLimiter:
         if not self.enabled:
             return {
                 "user_remaining": self.user_max_requests,
-                "team_remaining": self.team_max_requests if team_id else None,
+                "team_remaining": self.team_max_requests if team_id else 0,
                 "user_window_reset_seconds": 0,
                 "team_window_reset_seconds": 0,
             }
@@ -144,7 +144,7 @@ class UserRateLimiter:
         current_time = datetime.now()
         result = {
             "user_remaining": self.user_max_requests,
-            "team_remaining": self.team_max_requests if team_id else None,
+            "team_remaining": self.team_max_requests if team_id else 0,
         }
 
         # Check user remaining
@@ -158,8 +158,8 @@ class UserRateLimiter:
                 result["user_remaining"] = max(0, self.user_max_requests - count)
                 # Add time remaining in window
                 seconds_elapsed = (current_time - window_start).total_seconds()
-                result["user_window_reset_seconds"] = max(
-                    0, self.user_window_seconds - seconds_elapsed
+                result["user_window_reset_seconds"] = int(
+                    max(0, self.user_window_seconds - seconds_elapsed)
                 )
 
         # Check team remaining
@@ -173,8 +173,8 @@ class UserRateLimiter:
                 result["team_remaining"] = max(0, self.team_max_requests - team_count)
                 # Add time remaining in window
                 seconds_elapsed = (current_time - team_window_start).total_seconds()
-                result["team_window_reset_seconds"] = max(
-                    0, self.team_window_seconds - seconds_elapsed
+                result["team_window_reset_seconds"] = int(
+                    max(0, self.team_window_seconds - seconds_elapsed)
                 )
 
         return result
