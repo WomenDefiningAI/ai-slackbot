@@ -204,7 +204,11 @@ The bot maintains context in threads, so you can have a continuous conversation 
 1. Clone the repository
 2. Install dependencies:
    ```
-   pip install -r requirements.txt
+   # Install uv if you don't have it yet
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+
+   # Install dependencies using uv
+   uv pip sync
    ```
 3. Set up environment variables (use a `.env` file for local development)
 4. Run the application:
@@ -223,16 +227,18 @@ This project includes automatic code quality and security checks that run whenev
 
 This means you can be confident that the bot maintains high quality and security standards without needing to run technical tests yourself. This is enabled using Github actions. See python-checks.yml for more details.
 
-### Requirements.txt
+### Dependencies
+
+Dependencies are managed using pyproject.toml. The project requires Python 3.13+ and includes the following main packages:
 
 ```
-fastapi==0.110.0
-slack-sdk==3.27.1
-openai==1.64.0
-pydantic==2.10.6
-python-multipart==0.0.18
-requests==2.32.3
-uvicorn==0.29.0
+fastapi
+slack-sdk
+openai
+pydantic
+python-multipart
+requests
+uvicorn
 matplotlib
 pandas
 pillow

@@ -10,48 +10,52 @@ jobs:
   lint-and-security:
     name: Lint and Security Checks
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-          
+          python-version: '3.13'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install flake8 bandit safety pytest
-          pip install -r requirements.txt
-      
+          uv pip install --system flake8 bandit safety pytest
+          uv pip sync --system
+
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      
+
       - name: Security check with bandit
         run: |
           # Run bandit with medium level reporting, exclude test files
           # Only fail on high-severity issues to give more flexibility during development
           bandit -r app/ -x tests/ -ll -c bandit.yaml || echo "Warning: Some security issues detected but continuing the workflow"
-      
+
       - name: Check dependencies for security vulnerabilities
         run: |
           # Only report high severity issues and don't fail the build on vulnerabilities
-          safety check -r requirements.txt --full-report --ignore-vulnerabilities $(cat .safety-ignore || echo "") || echo "Warning: Dependency vulnerabilities detected but continuing the workflow"
+          safety check --full-report --ignore-vulnerabilities $(cat .safety-ignore || echo "") || echo "Warning: Dependency vulnerabilities detected but continuing the workflow"
 
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Dependency Review
-        uses: actions/dependency-review-action@v3 
+        uses: actions/dependency-review-action@v3
