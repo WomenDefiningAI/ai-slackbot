@@ -6,9 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.115.11",
-    "matplotlib>=3.10.1",
     "openai>=1.68.0",
-    "pandas>=2.2.3",
     "pillow>=11.1.0",
     "pydantic>=2.10.6",
     "python-multipart>=0.0.20",
